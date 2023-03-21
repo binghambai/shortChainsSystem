@@ -1,4 +1,4 @@
-package com.example.shortchainssystem.vo;
+package com.example.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
