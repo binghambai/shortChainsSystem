@@ -4,6 +4,7 @@ import com.example.ShortChainsSystemApplication;
 import com.example.model.ShortUrl;
 import com.example.redisTemplate.RedisService;
 import com.example.respority.ShortUrlRepository;
+import com.example.utils.SnowFlake;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.redisson.api.RBloomFilter;
@@ -51,6 +52,15 @@ class ShortChainsSystemApplicationTests {
         System.out.println(filter.contains("test1"));;
         System.out.println(filter.count());
 
+    }
+
+    @Autowired
+    private SnowFlake snowFlake;
+
+    @Test
+    void testSnowFlak() {
+        long id = snowFlake.nextId();
+        System.out.println(id);
     }
 
 }
