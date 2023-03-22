@@ -2,9 +2,12 @@ package com.example.shortchainssystem;
 
 import com.example.ShortChainsSystemApplication;
 import com.example.model.ShortUrl;
+import com.example.redisTemplate.RedisService;
 import com.example.respority.ShortUrlRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -23,6 +26,31 @@ class ShortChainsSystemApplicationTests {
                 .sourceUr("https://github.com/respority/binghambai")
                 .build());
         System.out.println(save);
+    }
+
+    @Autowired
+    private RedisService redisService;
+
+    @Test
+    void testRedis() {
+        redisService.putString("test", "test112313");
+
+        System.out.println(redisService.getString("test"));
+    }
+
+    @Autowired
+    private RedissonClient redissonClient;
+
+    @Test
+    void testRedisBloom() {
+        RBloomFilter<String> filter = redissonClient.getBloomFilter("sample");
+        // 初始大小   可接受的错误率
+        filter.tryInit(55000L, 0.03);
+        filter.add("test1");
+
+        System.out.println(filter.contains("test1"));;
+        System.out.println(filter.count());
+
     }
 
 }

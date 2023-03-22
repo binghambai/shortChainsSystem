@@ -2,12 +2,20 @@ server:
   port: 8000
 
 spring:
+  # datasource
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/test?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://172.21.80.1:3306/test?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
 
+    # redis
+  redis:
+    host: 172.21.80.1
+    port: 16379
+    password: redis
+
+  # jpa
   jpa:
     show-sql: true
     properties:
@@ -18,10 +26,9 @@ spring:
           merge:
             entity_copy_observer: allow
     database-platform: org.hibernate.dialect.MySQLDialect
-
-#logging:
-#  level:
-#    org.hibernate.SQL: debug
-#    org.hibernate.engine.QueryParameters: debug
-#    org.hibernate.engine.query.HQLQueryPlan: debug
-#    org.hibernate.type.descriptor.sql.BasicBinder: trace
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.engine.QueryParameters: debug
+    org.hibernate.engine.query.HQLQueryPlan: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
