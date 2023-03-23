@@ -34,7 +34,7 @@ class ShortChainsSystemApplicationTests {
 
     @Test
     void testRedis() {
-        redisService.putString("test", "test112313", 50);
+        redisService.setString("test", "test112313", 50L);
 
         System.out.println(redisService.getString("test"));
     }
@@ -47,9 +47,11 @@ class ShortChainsSystemApplicationTests {
         RBloomFilter<String> filter = redissonClient.getBloomFilter("sample");
         // 初始大小   可接受的错误率
         filter.tryInit(55000L, 0.03);
-        filter.add("test1");
 
-        System.out.println(filter.contains("test1"));;
+
+        System.out.println(filter.contains("test1"));
+        System.out.println(filter.contains("test2_test"));
+        System.out.println(filter.contains("test_json"));
         System.out.println(filter.count());
 
     }

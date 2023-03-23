@@ -19,9 +19,11 @@ public class RedissonBloom {
 
     private static final double falseProbability = 0.03;
 
+    private static final String BLOOM_NAME = "shortChains";
+
     @PostConstruct
     private void init() {
-        RBloomFilter<String> tmpFitter = redissonClient.getBloomFilter("sample");
+        RBloomFilter<String> tmpFitter = redissonClient.getBloomFilter(BLOOM_NAME);
         tmpFitter.tryInit(expectedInsertions, falseProbability);
         fitter = tmpFitter;
     }

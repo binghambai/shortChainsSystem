@@ -14,6 +14,7 @@ import io.micrometer.core.instrument.util.StringUtils;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,10 +44,10 @@ public class ShortChainsService {
         return BaseResponse.success(ShortChainsResponse.builder().url(resUrl).build());
     }
 
+    //TODO 需要修改布隆判断的位置，布隆中存储的应该是生成的shortId，校验这个id是否重复
     private String getShortUri(ShortChainsRequest request) {
         //布隆过滤器判断是否存在
-        RBloomFilter<String> fitter = RedissonBloom.fitter;
-        if (fitter.contains(request.getSourceUrl())) {
+        if (redisService.bloomExist(request.getSourceUrl())) {
             String shortUrl = redisService.getString(request.getSourceUrl());
             if (StringUtils.isNotBlank(shortUrl)) {
                 //TODO 缓存中存在需要对当前的url进行判断是否是热门，对缓存进行续期，比如小时内访问次数超过20次
@@ -62,9 +63,9 @@ public class ShortChainsService {
         //缓存中不存在需要生成
         long shortId = getShortId();
         //存入redis
-        redisService.putString(request.getSourceUrl(), String.valueOf(shortId), 60*60L);
+        redisService.setString(request.getSourceUrl(), String.valueOf(shortId), 60*60L);
         //写人布隆列表
-        fitter.add(String.valueOf(shortId));
+        redisService.addBloom(request.getSourceUrl());
         //存储到数据库db
         saveData(shortId, request.getSourceUrl());
         return String.valueOf(shortId);
