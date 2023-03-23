@@ -18,9 +18,10 @@ public class BaseResponse<T> implements Serializable {
     private static final int ERROR_CODE = 500;
     private static final int SUCCESS_CODE = 200;
     private static final String MSG = "操作失败";
+    private static final String S_MSG = "操作成功";
 
     public static <T> BaseResponse<T> success(T context) {
-        return new BaseResponse<>(MSG, SUCCESS_CODE, context);
+        return new BaseResponse<>(S_MSG, SUCCESS_CODE, context);
     }
 
     public static <T> BaseResponse<T> failed(String msg) {

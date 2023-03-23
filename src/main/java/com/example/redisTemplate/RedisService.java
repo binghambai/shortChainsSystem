@@ -11,8 +11,8 @@ public class RedisService implements RedisServiceInterface{
     private RedisTemplate<Object, Object> redisTemplate;
 
     @Override
-    public void putString(String key, String value) {
-        redisTemplate.opsForValue().set(key, value);
+    public void putString(String key, String value, long timeout) {
+        redisTemplate.opsForValue().set(key, value, timeout);
     }
 
     @Override

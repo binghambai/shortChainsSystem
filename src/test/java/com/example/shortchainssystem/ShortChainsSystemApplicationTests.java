@@ -34,7 +34,7 @@ class ShortChainsSystemApplicationTests {
 
     @Test
     void testRedis() {
-        redisService.putString("test", "test112313");
+        redisService.putString("test", "test112313", 50);
 
         System.out.println(redisService.getString("test"));
     }
