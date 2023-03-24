@@ -56,6 +56,11 @@ class ShortChainsSystemApplicationTests {
 
     }
 
+    @Test
+    public void existById() {
+        System.out.println(shortUrlRepository.existsById(1123123123L));
+    }
+
     @Autowired
     private SnowFlake snowFlake;
 

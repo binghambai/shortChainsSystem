@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long>, JpaSpecificationExecutor<ShortUrl> {
 
     ShortUrl findBySourceUr(String sourceUrl);
+
+    boolean existsById(Long id);
 }
