@@ -32,3 +32,8 @@ logging:
     org.hibernate.engine.QueryParameters: debug
     org.hibernate.engine.query.HQLQueryPlan: debug
     org.hibernate.type.descriptor.sql.BasicBinder: trace
+
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: my-group

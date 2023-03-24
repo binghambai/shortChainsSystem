@@ -1,4 +1,4 @@
-package com.example.model;
+package com.example.db.model;
 
 import lombok.*;
 import org.springframework.data.util.ProxyUtils;
@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
@@ -15,7 +16,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ShortUrl {
+public class ShortUrl implements Serializable {
     @Id
     @Column(name = "id", nullable = false)
     private Long id;
@@ -36,4 +37,9 @@ public class ShortUrl {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+    public boolean isEmpty() {
+        return this.id == null || this.sourceUr == null || this.sourceUr.length() < 1;
+    }
+
 }

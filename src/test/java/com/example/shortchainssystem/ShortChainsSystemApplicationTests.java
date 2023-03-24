@@ -1,9 +1,11 @@
 package com.example.shortchainssystem;
 
 import com.example.ShortChainsSystemApplication;
-import com.example.model.ShortUrl;
+import com.example.db.model.ShortUrl;
+import com.example.db.model.ShortUrlHotDatum;
+import com.example.db.respority.ShortUrlHotDatumRepository;
 import com.example.redisTemplate.RedisService;
-import com.example.respority.ShortUrlRepository;
+import com.example.db.respority.ShortUrlRepository;
 import com.example.utils.SnowFlake;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +14,10 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @SpringBootTest(classes = {ShortChainsSystemApplication.class})
 @RunWith(SpringRunner.class)
@@ -68,6 +74,19 @@ class ShortChainsSystemApplicationTests {
     void testSnowFlak() {
         long id = snowFlake.nextId();
         System.out.println(id);
+    }
+
+    @Autowired
+    private ShortUrlHotDatumRepository shortUrlHotDatumRepository;
+
+    @Test
+    void testJpa() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 0, 0, 0)
+                .minus(1, ChronoUnit.DAYS);
+        LocalDateTime end = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 23, 59, 59);
+        List<ShortUrlHotDatum> byRangeTime = shortUrlHotDatumRepository.findByRangeTime(start, end);
+        System.out.println(byRangeTime);
     }
 
 }

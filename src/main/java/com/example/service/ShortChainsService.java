@@ -2,9 +2,10 @@ package com.example.service;
 
 import com.example.context.CommonErrorInfo;
 import com.example.exceptions.RunningException;
-import com.example.model.ShortUrl;
+import com.example.db.model.ShortUrl;
+import com.example.mq.producer.ShortChainsProducer;
 import com.example.redisTemplate.RedisService;
-import com.example.respority.ShortUrlRepository;
+import com.example.db.respority.ShortUrlRepository;
 import com.example.utils.SnowFlake;
 import com.example.vo.BaseResponse;
 import com.example.vo.ShortChainsRequest;
@@ -14,6 +15,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ShortChainsService {
 
@@ -22,6 +25,9 @@ public class ShortChainsService {
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private ShortChainsProducer shortChainsProducer;
 
     @Autowired
     private SnowFlake snowFlake;
@@ -35,6 +41,11 @@ public class ShortChainsService {
 
     public BaseResponse<ShortChainsResponse> getShortChain(ShortChainsRequest request) {
         String shortUrl = getShortUri(request);
+        shortChainsProducer.sendShortIdMessage(ShortUrl.builder()
+                        .id(Long.valueOf(shortUrl))
+                        .sourceUr(request.getSourceUrl())
+                .build());
+
 
         String resUrl = DOMAIN + shortUrl;
 
@@ -43,47 +54,48 @@ public class ShortChainsService {
         return BaseResponse.success(ShortChainsResponse.builder().url(resUrl).build());
     }
 
+    //TODO 待解决
+    //     1.统计hot key
+    //     2. 设置二级缓存，ehcache、spring cache、HashMap
+    //     3.使用二级缓存 ， 两层缓存和db的数据同步问题
     private String getShortUri(ShortChainsRequest request) {
-        //二级缓存获取数据
+        //获取redis数据
         String shortUrl = redisService.getString(request.getSourceUrl());
-        if (StringUtils.isNotBlank(shortUrl)) {
-            //TODO 缓存中存在需要对当前的url进行判断是否是热门，
-            // 对缓存进行续期，比如小时内访问次数超过20
-            // 考虑使用二级缓存，先去查询java 缓存
-            return shortUrl;
-        } else {
-            //很小几率 需要查询数据库是否存在
-            ShortUrl dto = findUrl(request.getSourceUrl());
-            if (dto != null) {
-                return dto.getId().toString();
-            }
-        }
+        Long resShortId = null;
+        if (StringUtils.isBlank(shortUrl)) {
+            //1 查询mysql中是否存在
+            List<ShortUrl> dto = findUrl(request.getSourceUrl());
+            if (dto == null || dto.size() != 1) {
+                //2 mysql中不存在则生成
+                resShortId = getShortId();
 
-        //缓存中不存在需要生成
-        Long shortId = getShortId();
-
-        //循环生成判断，知道生成的数据不重复
-        //设置循环次数，防止布隆误判产生死循环
-        int curlCount = 0;
-        while (redisService.bloomExist(request.getSourceUrl())) {
-            //需要重新生成一次
-            if (curlCount++ > BLOOM_CYCLE_MAX_COUNT) {
-                //查询一次db判断是否真的不存在
-                if (!shortUrlRepository.existsById(shortId)) {
-                    break;
-                } else {
-                    shortId = getShortId();
+                // 3 判断生成的id是否存在歧义
+                int curlCount = 0;
+                while (redisService.bloomExist(resShortId.toString())) {
+                    //需要重新生成一次
+                    if (curlCount++ > BLOOM_CYCLE_MAX_COUNT) {
+                        //查询一次db判断是否真的不存在
+                        if (shortUrlRepository.existsById(resShortId)) {
+                            resShortId = getShortId();
+                        }
+                        break;
+                    }
+                    resShortId = getShortId();
                 }
+
+                //4 存储到数据库db
+                saveData(resShortId, request.getSourceUrl());
+                //6 布隆列表
+                redisService.addBloom(resShortId.toString());
+            } else {
+                //数据库存在就直接返回
+                resShortId = dto.get(0).getId();
             }
-            shortId = getShortId();
+            //5 存储到redis
+            redisService.setString(request.getSourceUrl(), String.valueOf(resShortId), 60 * 60L);
+            //7 统计当前key
         }
-        //写人布隆列表
-        redisService.addBloom(shortId.toString());
-        //存入redis
-        redisService.setString(request.getSourceUrl(), String.valueOf(shortId), 60*60L);
-        //存储到数据库db
-        saveData(shortId, request.getSourceUrl());
-        return String.valueOf(shortId);
+        return String.valueOf(resShortId);
     }
 
     private void saveData(Long shortId, String sourceUrl) {
@@ -101,7 +113,7 @@ public class ShortChainsService {
         return snowFlake.nextId();
     }
 
-    private ShortUrl findUrl(String sourceUrl) {
+    private List<ShortUrl> findUrl(String sourceUrl) {
         return shortUrlRepository.findBySourceUr(sourceUrl);
     }
 }
