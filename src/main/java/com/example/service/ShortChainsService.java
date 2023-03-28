@@ -1,11 +1,11 @@
 package com.example.service;
 
 import com.example.context.CommonErrorInfo;
-import com.example.exceptions.RunningException;
 import com.example.db.model.ShortUrl;
+import com.example.db.respority.ShortUrlRepository;
+import com.example.exceptions.RunningException;
 import com.example.mq.producer.ShortChainsProducer;
 import com.example.redisTemplate.RedisService;
-import com.example.db.respority.ShortUrlRepository;
 import com.example.utils.SnowFlake;
 import com.example.vo.BaseResponse;
 import com.example.vo.ShortChainsRequest;
@@ -41,11 +41,6 @@ public class ShortChainsService {
 
     public BaseResponse<ShortChainsResponse> getShortChain(ShortChainsRequest request) {
         String shortUrl = getShortUri(request);
-        shortChainsProducer.sendShortIdMessage(ShortUrl.builder()
-                        .id(Long.valueOf(shortUrl))
-                        .sourceUr(request.getSourceUrl())
-                .build());
-
 
         String resUrl = DOMAIN + shortUrl;
 
@@ -54,11 +49,7 @@ public class ShortChainsService {
         return BaseResponse.success(ShortChainsResponse.builder().url(resUrl).build());
     }
 
-    //TODO 待解决
-    //     1.统计hot key
-    //     2. 设置二级缓存，ehcache、spring cache、HashMap
-    //     3.使用二级缓存 ， 两层缓存和db的数据同步问题
-    private String getShortUri(ShortChainsRequest request) {
+    private synchronized String getShortUri(ShortChainsRequest request) {
         //获取redis数据
         String shortUrl = redisService.getString(request.getSourceUrl());
         Long resShortId = null;
@@ -93,7 +84,8 @@ public class ShortChainsService {
             }
             //5 存储到redis
             redisService.setString(request.getSourceUrl(), String.valueOf(resShortId), 60 * 60L);
-            //7 统计当前key
+        } else {
+            return shortUrl;
         }
         return String.valueOf(resShortId);
     }
@@ -101,8 +93,8 @@ public class ShortChainsService {
     private void saveData(Long shortId, String sourceUrl) {
         try {
             shortUrlRepository.save(ShortUrl.builder()
-                            .id(shortId)
-                            .sourceUr(sourceUrl)
+                    .id(shortId)
+                    .sourceUr(sourceUrl)
                     .build());
         } catch (Exception e) {
             throw new RunningException(CommonErrorInfo.errorCode, "存储短链失败");

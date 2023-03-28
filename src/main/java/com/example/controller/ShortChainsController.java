@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.mq.consumer.BeginStatisticConsumer;
 import com.example.mq.consumer.TestConsumer;
 import com.example.mq.producer.ShortChainsProducer;
 import com.example.service.ShortChainsService;
@@ -26,16 +27,16 @@ public class ShortChainsController {
 
     @GetMapping("/api/test/order/mq")
     public BaseResponse<ShortChainsResponse> getShortChai(@RequestParam(value = "msg") String request) {
-        shortChainsProducer.sendOrderMessage("");
+        shortChainsProducer.sendBeginStatisticMessage();
         return null;
     }
 
     @Autowired
-    private TestConsumer testConsumer;
+    private BeginStatisticConsumer beginStatisticConsumer;
 
     @GetMapping("/api/test/order/get")
     public BaseResponse<ShortChainsResponse> get() {
-        System.out.println(testConsumer.getCount());
+        System.out.println(beginStatisticConsumer.getMap());
         return null;
     }
 }

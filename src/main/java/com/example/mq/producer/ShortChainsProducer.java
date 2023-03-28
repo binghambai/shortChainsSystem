@@ -39,8 +39,7 @@ public class ShortChainsProducer {
     }
 
     public void sendBeginStatisticMessage() {
-        rocketMQTemplate.convertAndSend(MessageAddress.TOPIC_BEGIN_STATISTIC_HOT_KEY, "");
-        System.out.println("普通消息发送成功");
+        rocketMQTemplate.convertAndSend(MessageAddress.TOPIC_BEGIN_STATISTIC_HOT_KEY, "test");
     }
 
     public void sendOrderMessage(String msg) {
